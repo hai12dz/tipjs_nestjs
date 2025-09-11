@@ -1,8 +1,11 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TicketModule } from './ticket/ticket.module';
 import { OrderModule } from './order/order.module';
+import { LogMiddleware } from './log.middleware';
+import { APP_GUARD } from '@nestjs/core';
+import { LoginGuardTsGuard } from './login.guard.ts.guard';
 
 @Module({
   imports: [TicketModule, OrderModule],
@@ -29,8 +32,16 @@ import { OrderModule } from './order/order.module';
         }
       },
       inject: ['user', 'app_service']
-    }
+    },
+    //guard global
+    { provide: APP_GUARD, useClass: LoginGuardTsGuard }
   ],
 }
 )
-export class AppModule { }
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(LogMiddleware)
+      .forRoutes('api/m10');
+  }
+}

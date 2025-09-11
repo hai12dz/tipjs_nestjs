@@ -1,7 +1,13 @@
-import { Controller, Get, Inject } from '@nestjs/common';
+import { Controller, Get, Inject, Query, UseFilters, UseGuards, UseInterceptors, UsePipes } from '@nestjs/common';
 import { AppService } from './app.service';
+import { LoginGuardTsGuard } from './login.guard.ts.guard';
+import { TimeInterceptor } from './time.interceptor';
+import { ValidatePipe } from './validate.pipe';
+import { TestFilter } from './test.filter';
 
 @Controller()
+@UseInterceptors(TimeInterceptor)
+@UsePipes(ValidatePipe)
 export class AppController {
   constructor(@Inject('app_service') private readonly appService: AppService,
     @Inject('user') private readonly user: { name: string, age: number },
@@ -19,5 +25,24 @@ export class AppController {
     console.log('Injected user2:', this.user2);
     console.log('Injected new_user:', this.newUser);
     return this.appService.getHello();
+  }
+
+  @Get('/api/cr7')
+  @UseInterceptors(TimeInterceptor)
+  getCR7(): string {
+    return "hello cr7";
+  }
+
+  @Get('/api/m10')
+  //  @UseGuards(LoginGuardTsGuard)
+  getM10(): string {
+    return "hello m10";
+  }
+
+
+  @Get('/api/getnumber')
+  @UseFilters(TestFilter)
+  getNumber(@Query('value', ValidatePipe) value: number): number {
+    return value + 1;
   }
 }
