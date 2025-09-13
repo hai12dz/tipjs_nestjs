@@ -6,9 +6,11 @@ import { OrderModule } from './order/order.module';
 import { LogMiddleware } from './log.middleware';
 import { APP_GUARD } from '@nestjs/core';
 import { LoginGuardTsGuard } from './login.guard.ts.guard';
+import { UserModule } from './user/user.module';
+// import { DbService } from './db/db.service';
 
 @Module({
-  imports: [TicketModule, OrderModule],
+  imports: [TicketModule, OrderModule, UserModule],
   controllers: [AppController],
   providers: [
     { provide: 'app_service', useClass: AppService },
@@ -34,7 +36,8 @@ import { LoginGuardTsGuard } from './login.guard.ts.guard';
       inject: ['user', 'app_service']
     },
     //guard global
-    { provide: APP_GUARD, useClass: LoginGuardTsGuard }
+    { provide: APP_GUARD, useClass: LoginGuardTsGuard },
+    // Remove DbService here; it is provided by DbModule.register() within modules that import it
   ],
 }
 )
