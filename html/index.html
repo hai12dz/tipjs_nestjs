@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload large file</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.9.0/axios.min.js"
+        integrity="sha512-FPlUpimug7gt7Hn7swE8N2pHw/+oQMq/+R/hH/2hZ43VOQ+Kjh25rQzuLyPz7aUWKlRpI7wXbY6+U3oFPGjPOA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+
+<body>
+    <h1>Upload large file</h1>
+    <input type="file" id="fileInput" multiple />
+    <script>
+        const inputFile = document.querySelector("#fileInput");
+
+        //set chunk size
+        const chunkSize = 140 * 1024; //140KB
+
+        //change file
+        inputFile.onchange = async function (event) {
+            //file[0]
+            const file = inputFile.files[0], chunks = [];
+            let startPos = 0;
+            while (startPos < file.size) {
+                chunks.push(file.slice(startPos, startPos + chunkSize));
+                startPos += chunkSize;
+            }
+            if (!chunks.length) return;
+            const fileNameRandom = Math.random().toString().slice(2, 7);
+            const chunkPromise = []
+            chunks.map((ck, index) => {
+
+                //multipart form data
+                const data = new FormData();
+                const nameFileFinal = fileNameRandom + '-' + file.name + '-' + index;
+                data.set("name", file.name + '-' + index);
+                // data.set("numFile", 20);
+                // [...inputFile.files].forEach((file, index) => {
+                //     data.append('file', file);
+                // });
+                data.append('file', ck, file.name); // giữ nguyên đuôi .pdf/.jpg
+                //call api
+                // const rs = axios.post('http://localhost:3000/user/upload/large-file', data, {
+                //     headers: {
+                //         'Content-Type': 'multipart/form-data'
+                //     }
+                // });
+                chunkPromise.push(axios.post('http://localhost:3000/user/upload/large-file', data))
+            })
+
+            //call merge api
+            await Promise.all(chunkPromise)
+            await axios.get('http://localhost:3000/user/merge/file?file=chunks-' + file.name);
+        };
+
+    </script>
+</body>
+
+</html>
+
+</html>

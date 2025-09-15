@@ -17,7 +17,8 @@ async function bootstrap() {
   // });
   //add guard global
   //  app.useGlobalGuards(new LoginGuardTsGuard());
-
+  //enable cors
+  app.enableCors();
   app.useGlobalPipes(new ValidationPipe());
   await app.listen(process.env.PORT ?? 3000);
 }
