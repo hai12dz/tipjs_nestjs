@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Query, UseFilters, UseGuards, UseInterceptors, UsePipes } from '@nestjs/common';
+import { Controller, Get, Inject, Logger, Query, UseFilters, UseGuards, UseInterceptors, UsePipes } from '@nestjs/common';
 import { AppService } from './app.service';
 import { LoginGuardTsGuard } from './login.guard.ts.guard';
 import { TimeInterceptor } from './time.interceptor';
@@ -9,6 +9,7 @@ import { TestFilter } from './test.filter';
 @UseInterceptors(TimeInterceptor)
 @UsePipes(ValidatePipe)
 export class AppController {
+  private logger = new Logger()
   constructor(@Inject('app_service') private readonly appService: AppService,
     @Inject('user') private readonly user: { name: string, age: number },
     @Inject('user2') private readonly user2: { name: string, age: number },
@@ -21,9 +22,7 @@ export class AppController {
 
   @Get()
   getHello(): string {
-    console.log('Injected user:', this.user);
-    console.log('Injected user2:', this.user2);
-    console.log('Injected new_user:', this.newUser);
+    this.logger.error('This is an error message');
     return this.appService.getHello();
   }
 
@@ -45,4 +44,10 @@ export class AppController {
   getNumber(@Query('value', ValidatePipe) value: number): number {
     return value + 1;
   }
+
+
+
+
+
+
 }

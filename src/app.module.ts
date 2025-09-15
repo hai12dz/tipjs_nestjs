@@ -7,6 +7,7 @@ import { LogMiddleware } from './log.middleware';
 import { APP_GUARD } from '@nestjs/core';
 import { LoginGuardTsGuard } from './login.guard.ts.guard';
 import { UserModule } from './user/user.module';
+import { MyLoggerDev } from 'logger/my.logger.dev';
 // import { DbService } from './db/db.service';
 
 @Module({
@@ -30,14 +31,17 @@ import { UserModule } from './user/user.module';
       useFactory: (user, appService) => {
         return {
           name: user.name + ' Smith',
-          helloService: appService.getHello()
+          helloService: appService.getHello(),
         }
       },
       inject: ['user', 'app_service']
     },
     //guard global
     { provide: APP_GUARD, useClass: LoginGuardTsGuard },
-    // Remove DbService here; it is provided by DbModule.register() within modules that import it
+    {
+      provide: 'MyLoggerDev',
+      useClass: MyLoggerDev,
+    },
   ],
 }
 )
