@@ -7,7 +7,9 @@ import { LogMiddleware } from './log.middleware';
 import { APP_GUARD } from '@nestjs/core';
 import { LoginGuardTsGuard } from './login.guard.ts.guard';
 import { UserModule } from './user/user.module';
-import { MyLoggerDev } from 'logger/my.logger.dev';
+import { MyLoggerDev } from '../logger/my.logger.dev';
+import { MyLogger } from '../logger/my.logger';
+
 // import { DbService } from './db/db.service';
 
 @Module({

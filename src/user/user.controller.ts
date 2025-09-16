@@ -8,9 +8,14 @@ import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import * as path from 'path';
 import * as fs from 'fs';
 import { Response as ExpressResponse } from 'express';
+import { MyLogger } from '../../logger/my.logger';
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) { }
+
+  constructor(
+    private readonly userService: UserService,
+    private readonly logger: MyLogger, // inject logger
+  ) { }
 
   @Post('upload/large-file')
   @UseInterceptors(FilesInterceptor('file', 20, {
@@ -44,7 +49,6 @@ export class UserController {
     fs.rmSync(files[0].path);
 
   }
-
 
   //merge file
   @Get('merge/file')
@@ -87,7 +91,6 @@ export class UserController {
     )
   }
 
-
   @Post('upload/avt')
   @UseInterceptors(FileInterceptor('file', {
     dest: 'uploads/avatar/',
@@ -109,7 +112,10 @@ export class UserController {
     return file.path;
   }
 
-
+  @Post('log')
+  log(@Body() body) {
+    this.logger.log("body", body);
+  }
 
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
@@ -118,7 +124,7 @@ export class UserController {
 
   @Post('new')
   registerUserDto(@Body() registerUserDto: RegisterUserDto) {
-    console.log("registerUserDto", registerUserDto);
+    this.logger.log(`registerUserDto: ${JSON.stringify(registerUserDto)}`, UserController.name);
     return this.userService.register(registerUserDto);
   }
 

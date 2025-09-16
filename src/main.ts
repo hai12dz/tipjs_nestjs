@@ -4,15 +4,16 @@ import { LoginGuardTsGuard } from './login.guard.ts.guard';
 import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
-
+import { MyLoggerDev } from '../logger/my.logger.dev';
+import { MyLogger } from '../logger/my.logger';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule,
     {
-      //logger: new MyLogger(), //custom logger
+      //logger: new  MyLogger(), // Sử dụng MyLogger tùy chỉnh
       bufferLogs: true,
     }
   );
-  app.useLogger(app.get('MyLoggerDev'));
+  app.useLogger(new MyLogger());
   app.useStaticAssets(join(__dirname, '../uploads'), { prefix: '/uploads' });
   //add middleware global
 
