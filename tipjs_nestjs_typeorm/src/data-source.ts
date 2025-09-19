@@ -3,6 +3,7 @@ import { DataSource } from "typeorm"
 import { User } from "./entity/User"
 import { Xxx } from "./entity/Xxx"
 import { CCCD } from "./entity/CCCD"
+import { Feed } from "./entity/Feed"
 
 export const AppDataSource = new DataSource({
     type: "mysql",
@@ -13,7 +14,7 @@ export const AppDataSource = new DataSource({
     database: "haidao_nestjs_typeorm_tipjs",
     synchronize: true,
     logging: false,
-    entities: [User, Xxx, CCCD],
+    entities: [User, Xxx, CCCD, Feed],
     migrations: [],
     subscribers: [],
 })
