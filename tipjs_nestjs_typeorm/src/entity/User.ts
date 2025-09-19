@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne } from "typeorm"
+import { CCCD } from "./CCCD"
 
 @Entity()
 export class User {
@@ -14,5 +15,8 @@ export class User {
 
     @Column()
     age: number
+
+    @OneToOne(() => CCCD, cccd => cccd.user)
+    cccd: CCCD
 
 }

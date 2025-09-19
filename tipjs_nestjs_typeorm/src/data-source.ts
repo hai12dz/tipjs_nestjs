@@ -2,6 +2,7 @@ import "reflect-metadata"
 import { DataSource } from "typeorm"
 import { User } from "./entity/User"
 import { Xxx } from "./entity/Xxx"
+import { CCCD } from "./entity/CCCD"
 
 export const AppDataSource = new DataSource({
     type: "mysql",
@@ -12,7 +13,7 @@ export const AppDataSource = new DataSource({
     database: "haidao_nestjs_typeorm_tipjs",
     synchronize: true,
     logging: false,
-    entities: [User, Xxx],
+    entities: [User, Xxx, CCCD],
     migrations: [],
     subscribers: [],
 })
