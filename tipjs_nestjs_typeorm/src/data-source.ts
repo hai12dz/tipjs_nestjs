@@ -4,6 +4,8 @@ import { User } from "./entity/User"
 import { Xxx } from "./entity/Xxx"
 import { CCCD } from "./entity/CCCD"
 import { Feed } from "./entity/Feed"
+import { Tag } from "./entity/Tag"
+import { Post } from "./entity/Post"
 
 export const AppDataSource = new DataSource({
     type: "mysql",
@@ -14,7 +16,7 @@ export const AppDataSource = new DataSource({
     database: "haidao_nestjs_typeorm_tipjs",
     synchronize: true,
     logging: false,
-    entities: [User, Xxx, CCCD, Feed],
+    entities: [User, Xxx, CCCD, Feed, Post, Tag],
     migrations: [],
     subscribers: [],
 })

@@ -1,74 +1,60 @@
 import { AppDataSource } from "./data-source"
 import { CCCD } from "./entity/CCCD"
 import { Feed } from "./entity/Feed";
+import { Post } from "./entity/Post";
+import { Tag } from "./entity/Tag";
 import { User } from "./entity/User"
 
 AppDataSource.initialize().then(async () => {
+    //save
+    // const p1 = new Post();
+    // p1.title = "post 1";
 
-    // const user = new User()
-    // user.firstName = "John"
-    // user.lastName = "Doe"
-    // user.age = 25
+    // const p2 = new Post();
+    // p2.title = "post 2";
 
-    // await AppDataSource.manager.save(user)
-    // console.log("User has been saved")
+    // const p3 = new Post();
+    // p3.title = "post 3";
 
-    // //cccd 
-    // const cccd = new CCCD();
-    // cccd.cccd_no = "123456789012";
-    // cccd.user = user;
+    // const t1 = new Tag();
+    // t1.name = "tag 1";
 
-    // await AppDataSource.manager.save(cccd);
-    // console.log("CCCD has been saved");
+    // const t2 = new Tag();
+    // t2.name = "tag 2";
 
-    // await AppDataSource.manager.delete(User, 17);
+    // const t3 = new Tag();
+    // t3.name = "tag 3";
 
-    // const cccd1 = await AppDataSource.manager.find(CCCD, { relations: ["user"] });
-    // console.log(cccd1);
-    // const cccd2 = await AppDataSource.manager.getRepository(CCCD).
-    //     createQueryBuilder("cccd").
-    //     leftJoinAndSelect("cccd.user", "user").
-    //     getMany();
-    // console.log(cccd2);
+    // p1.tags = [t1, t2];
+    // p2.tags = [t2, t3];
+    // p3.tags = [t1, t3];
 
-    // ...existing code...
-    // const u = new User();
-    // u.name = "Nguyen Van B";
+    const entityManager = AppDataSource.manager;
+    // await entityManager.save([t1, t2, t3]);
+    // await entityManager.save([p1, p2, p3]);
+    //update
+    // const postToupdate = await AppDataSource.manager.findOne(Post, {
+    //     where: { id: 1 },
+    //     relations: { tags: true }
+    // });
+    // if (postToupdate) {
+    //     postToupdate.title = "post 1 updated";
+    //     postToupdate.tags = postToupdate.tags.filter(t => t.name.includes("tag"));
+    //     await AppDataSource.manager.save(postToupdate);
+    // }
 
-    // const f1 = new Feed();
-    // f1.feed_Name = "Feed 1";
+    // console.log(postToupdate, "------------------", postToupdate.tags);
 
-    // const f2 = new Feed();
-    // f2.feed_Name = "Feed 2";
-
-    // const f3 = new Feed();
-    // f3.feed_Name = "Feed 33";
-
-    // // liên kết ở phía con (không bắt buộc nếu đã gán mảng ở phía cha, nhưng nên đồng bộ)
-    // f1.user = u;
-    // f2.user = u;
-    // f3.user = u;
-
-    // // gán mảng feeds để cascade hoạt động
-    // u.feeds = [f1, f2, f3];
-
-    // await AppDataSource.manager.save(u);
-    // console.log("User + feeds saved (cascade insert)");
-    // ...existing code...
+    // const posts = await AppDataSource.manager.find(Post, { relations: { tags: true } });
+    // console.log(posts, "------------------", posts.map(p => p.tags));
 
 
-    // const users = await AppDataSource.manager.find(User, { relations: ["feeds"] });
-    // console.log(users);
-    // console.log('feed => ', users.map(u => u.feeds));
+    //delete
+    // await entityManager.delete(Post, { id: 1 });
+    // console.log("Deleted post with id 1");
 
-    // const users = await AppDataSource.manager.getRepository(User).
-    //     createQueryBuilder("user").
-    //     leftJoinAndSelect("user.feeds", "feed").
-    //     getMany();
-    // console.log(users);
-    // console.log('feed => ', users.map(u => u.feeds));
 
-    //delete user 
-    await AppDataSource.manager.delete(User, 28);
-    console.log("User deleted (cascade delete in db level)");
+
+
+
 }).catch(error => console.log(error))

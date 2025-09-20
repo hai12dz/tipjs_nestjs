@@ -19,7 +19,10 @@ export class User {
 
 
     @OneToMany(() => Feed, feed => feed.user, {
-        cascade: true
+        cascade: true,
+        //cascade:['remove']// khi xóa user thì xóa feed (cascade delete in typeorm level)
+        //  equal onDelete:'CASCADE' in db level, feed
+
     })
     feeds: Feed[];
 

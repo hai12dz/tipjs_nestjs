@@ -16,7 +16,7 @@ export class Feed {
      * two things are different
      * 
      * if cascade:true, you use delete at user repository, feed will not be deleted because it requires to load feed first then delete, 
-     * you have to use remove method instead of delete method instead or use onDelete:'CASCADE' in db level at feed entity(many side which has foreign key)
+     * you have to use remove method and cascade:'remove' instead of delete method or use onDelete:'CASCADE' in db level at feed entity(many side which has foreign key)
      */
     @PrimaryGeneratedColumn()
     id: number
