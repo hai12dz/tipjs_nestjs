@@ -27,4 +27,7 @@ export class Xxx {
         type: 'double',
     })
     x3: number;
+
+    @Column()
+    x4: string;
 }

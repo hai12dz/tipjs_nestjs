@@ -4,6 +4,7 @@ import { Feed } from "./entity/Feed";
 import { Post } from "./entity/Post";
 import { Tag } from "./entity/Tag";
 import { User } from "./entity/User"
+import { Xxx } from "./entity/Xxx";
 
 AppDataSource.initialize().then(async () => {
     //save
@@ -55,6 +56,12 @@ AppDataSource.initialize().then(async () => {
 
 
 
+    const x = new Xxx();
+    x.x1 = "value for x1";
+    x.x2 = "value for 2x2";
+    x.x3 = 123.45;
+    await entityManager.save(x);
+    console.log("Saved a new xxx with id: " + x.id);
 
 
 }).catch(error => console.log(error))

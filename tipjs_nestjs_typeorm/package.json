@@ -17,6 +17,10 @@
    "scripts": {
       "start": "ts-node src/index.ts",
       "typeorm": "typeorm-ts-node-commonjs",
-      "dev": "nodemon --watch src --exec ts-node src/index.ts"
+      "dev": "nodemon --watch src --exec ts-node src/index.ts",
+      "migrations:run": "npm run typeorm -- -d src/data-source.ts migration:run",
+      "migrations:revert": "npm run typeorm -- -d src/data-source.ts migration:revert",
+      "migrations:generate": "npm run typeorm -- -d src/data-source.ts migration:generate",
+      "migrations:generate:init": "npm run typeorm -- -d src/data-source.ts migration:generate src/migration/InitAll"
    }
 }

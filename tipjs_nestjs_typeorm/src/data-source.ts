@@ -14,9 +14,9 @@ export const AppDataSource = new DataSource({
     username: "root",
     password: "Taolahai1762004@",
     database: "haidao_nestjs_typeorm_tipjs",
-    synchronize: true,
+    synchronize: false,
     logging: false,
-    entities: [User, Xxx, CCCD, Feed, Post, Tag],
-    migrations: [],
+    entities: [Xxx],
+    migrations: ['./src/migration/**.ts'],
     subscribers: [],
 })
