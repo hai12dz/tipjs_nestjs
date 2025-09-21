@@ -1,0 +1,20 @@
+{
+  "name": "prisma-guide-vid24",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "prisma": "^6.16.2",
+    "prisma-docs-generator": "^0.8.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.16.2"
+  }
+}

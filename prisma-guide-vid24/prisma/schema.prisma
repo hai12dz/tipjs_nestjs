@@ -1,0 +1,86 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+generator docs {
+  provider = "node node_modules/prisma-docs-generator"
+  output   = "../generated/docs"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Xxxx {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("xxxx_01")
+}
+
+model Yyyy {
+  id        Int      @id @default(autoincrement())
+  title     String   @db.VarChar(100)
+  content   String?  @map("content_text") @db.Text
+  published Boolean  @default(false)
+  authorId  Int      @db.Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([authorId, title])
+  @@map("yyyy_01")
+}
+
+//one-to-many
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String?
+  email     String   @unique
+  posts     Post[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Post {
+  id      Int     @id @default(autoincrement())
+  title   String
+  content String?
+
+  authorId Int
+  author   User @relation(fields: [authorId], references: [id])
+
+  categories PostCategories[] @relation("PostCategories")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([authorId])
+}
+
+//many-to-many
+model Category {
+  id    Int              @id @default(autoincrement())
+  name  String           @unique
+  posts PostCategories[] @relation("PostCategories")
+}
+
+model PostCategories {
+  postId     Int
+  categoryId Int
+  post       Post     @relation("PostCategories", fields: [postId], references: [id], onDelete: Cascade)
+  category   Category @relation("PostCategories", fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([postId, categoryId])
+}
