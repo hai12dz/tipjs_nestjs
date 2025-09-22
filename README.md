@@ -85,3 +85,66 @@ watch key1 key2 //theo doi thay doi cua key1,key2 neu co thay doi thi giao dich 
 neu trong transaction co loi cu phap thi khi exec xong toan bo giao dich se bi huy
 neu trong transaction co 1 key bi thay doi boi ben ngoai thi khi exec xong toan bo giao dich se bi huy
 neu trong transaction ko co loi cu phap nhung co loi logic thi khi exec xong toan bo giao dich van duoc thuc hien, dong nao loi thi se bi loi.
+
+
+### mysql index
+create index idx_name on table_name(column_name(length)) [asc|desc];
+alter table table_name add index idx_name(column_name(length)) [asc|desc];
+alter table table_name drop index idx_name;
+
+
+1.normal index: index binh thuong, ko co bat ki rang buoc nao, muc dich la cai thien hieu suat truy van
+create index idx_name on table_name(column_name(length)) [asc|desc];
+example: create index idx_name on users(name(10)) asc;
+2.unique index: index duy nhat, ko cho phep gia tri trung lap, hay dung cho email hoac cccd
+create unique index idx_name on table_name(column_name(length)) [asc|desc];
+example: create unique index idx_name on users(email(20)) desc;
+3.fulltext index: index toan van, chi su dung cho cac truong kieu text, varchar, char
+create fulltext index idx_name on table_name(column_name);
+example: create fulltext index idx_name on posts(content);
+4.primary index: index chinh, moi bang chi co 1 primary index, ko cho phep gia tri null, gia tri phai duy nhat
+Primary key(id) //id la primary key
+5.composite index: index hop, index tren nhieu cot
+create index idx_name on table_name(column1(length), column2(length)) [asc|desc];
+example: create index idx_name on users(name(10), email(20)) asc;
+
+### vi du ve composite index
+“Nguyên tắc ngoài cùng bên trái” = Khi tạo index nhiều cột, bạn chỉ phát huy index được nếu WHERE,
+ORDER BY, GROUP BY, JOIN bắt đầu từ cột đầu tiên (ngoài cùng bên trái) trong định nghĩa index.
+Vì BTREE index lưu dữ liệu theo thứ tự từ trái sang phải:
+Đầu tiên sắp xếp theo a.
+Trong cùng 1 giá trị a, sắp xếp tiếp theo b.
+Trong cùng 1 giá trị (a,b), sắp xếp tiếp theo c.
+👉 Nếu bạn bỏ qua a, MySQL không biết nhảy vào nhánh nào của cây, nên buộc phải bỏ index và quét toàn bảng.
+CREATE TABLE test_table_001 (
+    id INT PRIMARY KEY,
+    a INT,
+    b INT,
+    c INT,
+    d INT,
+    INDEX idx_abc (a, b, c) -- Composite index on columns a, b, and c
+);
+
+danh composite index theo cong thuc sau:
+cot nao ma co nhieu du lieu trung lap thi dat o cot cuoi cung
+cot nao ma co it du lieu trung lap thi dat o cot dau tien.
+cach nhan biet la lay count(distinct column_name) / count(*) neu ket qua < 0.1 thi dat o cot cuoi cung, neu > 0.1 thi dat o cot dau tien. cot nao lon hon thi dat truoc, cot nao nho hon thi dat sau
+
+SHOW INDEX FROM test_table_001
+
+EXPLAIN SELECT * FROM test_table_001 WHERE a = 1; --OK su dung index idx_abc
+EXPLAIN SELECT * FROM test_table_001 WHERE a = 1 and b =2; --OK su dung index idx_abc
+EXPLAIN SELECT * FROM test_table_001 WHERE b = 2; --KO su dung index idx_abc
+EXPLAIN SELECT * FROM test_table_001 WHERE c = 3; --KO su dung index idx_abc
+EXPLAIN SELECT * FROM test_table_001 WHERE a = 1 and c=2 ; --OK su dung index idx_abc nhung chi su dung phan a
+EXPLAIN SELECT * FROM test_table_001 WHERE a = 1 and b=2 and c=3; --OK su dung index idx_abc
+
+type: all-cho biet toan bo truy van duoc thuc hien tren bang
+system - cho biet 1 phan du lieu trong bang duoc truy van
+const - cho biet sql index duoc thuc hien trong truy van cua cau lenh hien tai
+index - chi muc phu dang duoc su dung
+range - cho biet truy van duoc thuc hien trong khoang thoi gian nhat dinh
+ref - cho biet truy van chi muc thong thuong dang duoc su dung
+![alt text](image-2.png)
+![alt text](image-1.png)
+
