@@ -74,3 +74,14 @@ zcard key //dem so member trong sorted set
 zincrby key increment member //tang diem so cua member len increment
 zrangebyscore key min max //lay tat ca member trong sorted set co diem so trong khoang tu min den max
 zscore key member //lay diem so cua member trong sorted set
+
+transaction redis
+multi //bat dau giao dich
+exec //ket thuc giao dich
+discard //huy giao dich
+watch key1 key2 //theo doi thay doi cua key1,key2 neu co thay doi thi giao dich se bi huy
+
+# vi du
+neu trong transaction co loi cu phap thi khi exec xong toan bo giao dich se bi huy
+neu trong transaction co 1 key bi thay doi boi ben ngoai thi khi exec xong toan bo giao dich se bi huy
+neu trong transaction ko co loi cu phap nhung co loi logic thi khi exec xong toan bo giao dich van duoc thuc hien, dong nao loi thi se bi loi.
