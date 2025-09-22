@@ -84,3 +84,15 @@ model PostCategories {
 
   @@id([postId, categoryId])
 }
+
+enum Role {
+  USER
+  ADMIN
+  GUEST
+}
+
+model UserRole {
+  id     Int  @id @default(autoincrement())
+  role   Role @default(USER)
+  userId Int  @unique
+}
