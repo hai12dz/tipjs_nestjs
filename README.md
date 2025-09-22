@@ -64,3 +64,13 @@ spop key count //lay va xoa ngau nhien count member trong set
 smove source destination member //chuyen member tu set source sang set destination
 sinter key1 key2 //lay giao cua 2 set
 sdiff key1 key2 //lay nhung member khong co trong set key2
+
+redis sorted set, xep hang san pham
+zadd key score1 member1 score2 member2 //them member vao sorted set voi diem so tuong ung
+zrem key member1 member2 //xoa member khoi sorted set
+zrange key start stop //lay tat ca member trong sorted set theo thu tu tang dan cua diem so (start va stop la chi so cua member trong sorted set, bat dau tu 0, ket thuc la -1)
+zrevrange key start stop //lay tat ca member trong sorted set theo thu tu giam dan cua diem so (start va stop la chi so cua member trong sorted set, bat dau tu 0, ket thuc la -1)
+zcard key //dem so member trong sorted set
+zincrby key increment member //tang diem so cua member len increment
+zrangebyscore key min max //lay tat ca member trong sorted set co diem so trong khoang tu min den max
+zscore key member //lay diem so cua member trong sorted set
