@@ -109,12 +109,53 @@ create index idx_name on table_name(column1(length), column2(length)) [asc|desc]
 example: create index idx_name on users(name(10), email(20)) asc;
 
 ### vi du ve composite index
-“Nguyên tắc ngoài cùng bên trái” = Khi tạo index nhiều cột, bạn chỉ phát huy index được nếu WHERE,
-ORDER BY, GROUP BY, JOIN bắt đầu từ cột đầu tiên (ngoài cùng bên trái) trong định nghĩa index.
-Vì BTREE index lưu dữ liệu theo thứ tự từ trái sang phải:
-Đầu tiên sắp xếp theo a.
-Trong cùng 1 giá trị a, sắp xếp tiếp theo b.
-Trong cùng 1 giá trị (a,b), sắp xếp tiếp theo c.
+1. Nguyên tắc Leftmost Prefix
+
+Với composite index (a, b, c) → chỉ dùng index hiệu quả nếu bắt đầu từ cột ngoài cùng bên trái và liên tục.
+Các tình huống dùng được:
+WHERE a = ?
+WHERE a = ? AND b = ?
+WHERE a = ? AND b = ? AND c = ?
+Không dùng được nếu bỏ a:
+WHERE b = ? (trừ khi có index riêng cho b).
+
+📌 2. Điều kiện WHERE
+So sánh bằng (=, IN, BETWEEN) → tận dụng index tốt.
+So sánh dạng range (<, >, BETWEEN, LIKE 'abc%') → dùng index nhưng chỉ đến cột đó, cột sau bỏ.
+Ví dụ index (a, b, c):
+WHERE a = 1 AND b > 10 AND c = 5
+→ chỉ dùng đến (a, b), bỏ c.
+
+📌 3. ORDER BY và GROUP BY
+Có thể tránh filesort nếu ORDER BY / GROUP BY khớp với index theo leftmost prefix.
+Ví dụ index (a, b, c):
+ORDER BY a, b ✅ dùng index.
+ORDER BY b ❌ phải filesort.
+Nếu WHERE phá vỡ prefix → ORDER BY sau đó cũng không cứu được.
+
+📌 4. Covering Index
+Nếu tất cả cột trong SELECT đều nằm trong index → MySQL chỉ đọc index (không phải quay về bảng).
+Giảm I/O nhưng không thay đổi quy tắc leftmost prefix.
+Ví dụ index (a, b, c):
+SELECT a, b FROM t WHERE b = 10; 
+→ Dùng index full scan (covering), nhưng không theo prefix chuẩn.
+
+📌 5. JOIN
+Khi JOIN trên cột có index → MySQL có thể dùng index để lookup (type: ref, eq_ref).
+Ví dụ:
+SELECT * FROM orders o
+JOIN customers c ON o.customer_id = c.id;
+→ Nếu customers.id là PK (có index) thì JOIN nhanh.
+
+📌 6. LIMIT + ORDER BY
+Nếu ORDER BY theo index → MySQL chỉ cần đọc một đoạn nhỏ trong index rồi dừng (limit pushdown).
+Giúp query rất nhanh với LIMIT 10.
+
+📌 7. Khi MySQL bỏ index
+Bảng nhỏ (vài trăm dòng), MySQL chọn Full Table Scan vì rẻ hơn.
+Điều kiện WHERE quá rộng, trả về hầu hết dữ liệu (index không còn ích gì).
+Dùng hàm trên cột (WHERE YEAR(date) = 2024) → MySQL không tận dụng index (trừ khi có functional index).
+So sánh không khớp kiểu dữ liệu (ví dụ cột số mà so với string).
 👉 Nếu bạn bỏ qua a, MySQL không biết nhảy vào nhánh nào của cây, nên buộc phải bỏ index và quét toàn bảng.
 CREATE TABLE test_table_001 (
     id INT PRIMARY KEY,
@@ -129,9 +170,44 @@ danh composite index theo cong thuc sau:
 cot nao ma co nhieu du lieu trung lap thi dat o cot cuoi cung
 cot nao ma co it du lieu trung lap thi dat o cot dau tien.
 cach nhan biet la lay count(distinct column_name) / count(*) neu ket qua < 0.1 thi dat o cot cuoi cung, neu > 0.1 thi dat o cot dau tien. cot nao lon hon thi dat truoc, cot nao nho hon thi dat sau
-
+Nếu a và b có trong điều kiện WHERE thì MySQL sẽ dùng index (a, b) hiệu quả, không cần c
 SHOW INDEX FROM test_table_001
+🛠 Demo
+-- Tạo bảng users
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255)
+);
 
+-- Tạo UNIQUE INDEX dựa trên 20 ký tự đầu tiên
+CREATE UNIQUE INDEX idx_email_prefix ON users(email(20));
+
+-- Nếu muốn so sánh, có thể thêm UNIQUE INDEX full (comment để tránh xung đột)
+-- CREATE UNIQUE INDEX idx_email_full ON users(email);
+
+🧪 Test dữ liệu
+-- Insert 2 email giống nhau ở 20 ký tự đầu
+INSERT INTO users (email) VALUES ('abcdefghijabcdefghijZZZ@example.com');
+INSERT INTO users (email) VALUES ('abcdefghijabcdefghijYYY@example.com');
+
+
+👉 Kết quả:
+
+Với UNIQUE INDEX email(20) → LỖI Duplicate entry, vì MySQL chỉ nhìn 20 ký tự đầu (abcdefghijabcdefghij).
+
+Với UNIQUE INDEX email (full) → KHÔNG lỗi, vì 2 email khác nhau sau ký tự thứ 20.
+
+🧪 Thêm 1 email khác hẳn
+INSERT INTO users (email) VALUES ('differentemail@example.com');
+
+
+👉 Chèn thành công với cả 2 loại index, vì prefix khác ngay từ đầu.
+
+🎯 Kết luận
+
+UNIQUE INDEX email(20) → tiết kiệm dung lượng nhưng có rủi ro duplicate “ảo”.
+
+UNIQUE INDEX email (full) → chính xác tuyệt đối nhưng tốn bộ nhớ hơn.
 EXPLAIN SELECT * FROM test_table_001 WHERE a = 1; --OK su dung index idx_abc
 EXPLAIN SELECT * FROM test_table_001 WHERE a = 1 and b =2; --OK su dung index idx_abc
 EXPLAIN SELECT * FROM test_table_001 WHERE b = 2; --KO su dung index idx_abc
@@ -145,6 +221,18 @@ const - cho biet sql index duoc thuc hien trong truy van cua cau lenh hien tai
 index - chi muc phu dang duoc su dung
 range - cho biet truy van duoc thuc hien trong khoang thoi gian nhat dinh
 ref - cho biet truy van chi muc thong thuong dang duoc su dung
+system > const > ref > range > index > ALL
 ![alt text](image-2.png)
 ![alt text](image-1.png)
 
+### ACID trong database
+Atomicity (Tính nguyên tử): Một giao dịch (transaction) phải được thực hiện hoàn toàn hoặc không thực hiện gì cả. Nếu một phần của giao dịch thất bại, toàn bộ giao dịch sẽ bị hủy bỏ và cơ sở dữ liệu sẽ trở về trạng thái ban đầu trước khi giao dịch bắt đầu.
+Consistency (Tính nhất quán): trước tồn kho = 100, mua 2 sản phẩm, order = 2. sau khi mua tồn kho =98. nhất quán: 98+2=100 = trước tồn kho.
+Isolation (Tính cô lập): ko ảnh hưởng lẫn nhau. Mỗi giao dịch phải được thực hiện một cách độc lập, không bị ảnh hưởng bởi các giao dịch khác đang diễn ra cùng lúc. Các thay đổi do một giao dịch thực hiện sẽ không được nhìn thấy bởi các giao dịch khác cho đến khi giao dịch đó được cam kết (committed).
+Durability (Tính bền vững): Khi một giao dịch đã được cam kết, các thay đổi do giao dịch đó thực hiện phải được lưu trữ vĩnh viễn trong cơ sở dữ liệu, ngay cả khi hệ thống gặp sự cố hoặc mất điện.
+
+4 cấp độ cách ly
+1.read uncommitted:  có 2 transaction, t1 đang update hoặc delete, t2 có thể đọc dữ liệu sẽ cho ra kết quả  lại mang kết quả sai đi làm việc khác trong khi chưa biết t1 có commit hay rollback.
+2.read committed: tùy thuộc vào thời điểm t2 đọc dữ liệu, nếu t1 chưa commit thì t2 sẽ  đọc đc dữ liệu cũ, nếu t1 đã commit thì t2 sẽ đọc đc dữ liệu mới
+3.repeatable read: t2 sẽ luôn đọc đc dữ liệu cũ dù t1 đã commit hay chưa, chỉ khi t2 commit thì mới đọc đc dữ liệu mới
+4.serializable: các transaction sẽ được thực hiện tuần tự, không có transaction nào được thực hiện đồng thời, đảm bảo tính nhất quán cao nhất nhưng hiệu suất thấp nhất.
