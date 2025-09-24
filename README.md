@@ -221,7 +221,7 @@ const - cho biet sql index duoc thuc hien trong truy van cua cau lenh hien tai
 index - chi muc phu dang duoc su dung
 range - cho biet truy van duoc thuc hien trong khoang thoi gian nhat dinh
 ref - cho biet truy van chi muc thong thuong dang duoc su dung
-system > const > ref > range > index > ALL
+system > const > eq_ref > ref > range > index > ALL
 ![alt text](image-2.png)
 ![alt text](image-1.png)
 
@@ -236,3 +236,160 @@ Durability (Tính bền vững): Khi một giao dịch đã được cam kết, 
 2.read committed: tùy thuộc vào thời điểm t2 đọc dữ liệu, nếu t1 chưa commit thì t2 sẽ  đọc đc dữ liệu cũ, nếu t1 đã commit thì t2 sẽ đọc đc dữ liệu mới
 3.repeatable read: t2 sẽ luôn đọc đc dữ liệu cũ dù t1 đã commit hay chưa, chỉ khi t2 commit thì mới đọc đc dữ liệu mới
 4.serializable: các transaction sẽ được thực hiện tuần tự, không có transaction nào được thực hiện đồng thời, đảm bảo tính nhất quán cao nhất nhưng hiệu suất thấp nhất.
+
+json trong mysql phải đánh index khi dùng vì nếu không sẽ rất chậm
+
+
+### ELK
+1. Elasticsearch: như database, lưu trữ và tìm kiếm dữ liệu
+2. Logstash: như middleware, thu thập, xử lý và chuyển đổi dữ liệu
+3. Kibana: như frontend, trực quan hóa và phân tích dữ liệu từ Elasticsearch
+
+1 số thao tác với kibana tương tác với Elasticsearch
+
+| SQL (quan hệ)             | Elasticsearch (document)        |
+| ------------------------- | ------------------------------- |
+| Database                  | Elasticsearch cluster           |
+| Schema (namespace)        | Không có khái niệm này          |
+| Table                     | Index                           |
+| Row                       | Document (JSON)                 |
+| Column                    | Field                           |
+| Schema (cấu trúc bảng)    | Mapping                         |
+| Index (tăng tốc truy vấn) | Inverted index (ES tạo tự động) |
+
+![alt text](image-3.png)
+Từ ES 7.x trở đi
+Type bị xóa hẳn.
+Bạn chỉ làm việc với:
+Index (như table)
+Document (như row)
+Field (như column)
+
+
+CREATE TABLE users (
+    id INT PRIMARY KEY,
+    username VARCHAR(50),
+    age INT,
+    email VARCHAR(100)
+);
+
+INSERT INTO users (id, username, age, email)
+VALUES (1, 'haidao', 21, 'hai@example.com');
+
+tương đương với Elasticsearch là
+PUT users
+{
+  "mappings": {
+    "properties": {
+      "id": { "type": "integer" },
+      "username": { "type": "text" },
+      "age": { "type": "integer" },
+      "email": { "type": "keyword" }
+    }
+  }
+}
+
+POST users/_doc
+{
+  "id": 1,
+  "username": "haidao",
+  "age": 21,
+  "email": "hai@example.com"
+}
+
+1 số API CRUD trong Elasticsearch
+Tạo index mới (Create Index) - như tạo table trong SQL
+PUT /my_index
+{
+  "mappings": {
+    "properties": {
+      "field1": { "type": "text" },
+      "field2": { "type": "keyword" }
+    }
+  }
+}
+
+Thêm document (Create Document) - như thêm row trong SQL
+POST users/_doc 
+{
+  "id": 1,
+  "username": "haidao",
+  "age": 21,
+  "email": "hai@example.com"
+}
+
+Đọc document (Read Document) - như đọc row trong SQL
+GET users/_doc/1
+
+Tìm kiếm document (Search Document) - như truy vấn với WHERE trong SQL
+GET users/_search
+{
+  "query": {
+    "match": {
+      "username": "haidao"
+    }
+  }
+}
+
+GET players/_search
+{
+  "query": {
+    "match": {
+      "phrase": {
+        "query": "juve help striker",
+      "minimum_should_match": 1
+        
+      }
+    }
+  }
+}
+
+Xóa document (Delete Document) - như xóa row trong SQL
+DELETE users/_doc/1
+
+Xóa index (Delete Index) - như xóa table trong SQL
+DELETE users
+
+
+### Câu: "Cách sử dụng index là WHERE phải ở cột được đánh index" — Đúng hay Sai?
+=> Sai (không đầy đủ). WHERE dùng cột có index giúp tối ưu, nhưng index còn được dùng ở nhiều tình huống khác.
+
+1. Nơi index có thể được khai thác
+- WHERE: so sánh =, IN, BETWEEN, >, <, LIKE 'abc%' (range dừng tại cột đó trong composite).
+- JOIN ... ON: cột bên phải của phép nối dùng index (type: eq_ref / ref).
+- ORDER BY / GROUP BY: nếu khớp thứ tự leftmost prefix của index → tránh filesort.
+- LIMIT + ORDER BY theo index → đọc vài entry đầu trong index rồi dừng.
+- Covering index: SELECT chỉ các cột nằm trong index → MySQL chỉ đọc index (dù filter yếu).
+- MIN/MAX: SELECT MIN(col) FROM t; nếu col có index ASC → lấy phần tử đầu (O(1)).
+- COUNT(*) với index phụ (InnoDB vẫn cần PK lookup, nhưng narrow index vẫn nhanh hơn).
+- Scan toàn bộ index (type = index) dù không có WHERE nếu index nhỏ hơn bảng.
+
+2. Khi KHÔNG dùng được dù có index
+- Bỏ cột đầu của composite (index (a,b,c) mà chỉ WHERE b=...).
+- Hàm / biểu thức trên cột: WHERE YEAR(created_at)=2024 (trừ khi có functional index).
+- LIKE '%abc' (wildcard đầu).
+- So sánh khác kiểu: cột INT so với chuỗi '001'.
+- Độ chọn lọc quá thấp (selectivity thấp) → optimizer bỏ index (ví dụ gender M/F).
+- Điều kiện OR trộn cột có index + cột không index (có thể khiến full scan).
+
+3. Ví dụ minh họa
+```sql
+-- Composite index (a,b,c)
+CREATE INDEX idx_abc ON t(a,b,c);
+
+-- Dùng tốt (prefix liên tục)
+WHERE a=1 AND b=2;
+-- Dùng 1 phần (chỉ a) vì b là range
+WHERE a=1 AND b>10 AND c=5;  -- c bị bỏ
+-- Không dùng được (b thiếu a)
+WHERE b=2;
+
+-- Dùng cho ORDER BY
+SELECT * FROM t WHERE a=1 ORDER BY b,c LIMIT 10;  -- dùng idx_abc
+SELECT * FROM t ORDER BY a,b,c LIMIT 10;          -- dùng idx_abc
+SELECT * FROM t ORDER BY b;                       -- không dùng idx_abc
+
+-- Covering index (idx_email)
+CREATE INDEX idx_email ON users(email);
+SELECT email FROM users;          -- có thể type=index (scan index)
+SELECT email FROM users WHERE email LIKE 'ha%'; -- dùng index range
